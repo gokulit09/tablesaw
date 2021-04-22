@@ -248,6 +248,18 @@ public class TableSliceGroup implements Iterable<TableSlice> {
     return tableList;
   }
 
+  public List<Table> asTableList(String... columnNames) {
+    List<Table> tableList = new ArrayList();
+    Iterator var3 = this.iterator();
+
+    while(var3.hasNext()) {
+      TableSlice view = (TableSlice)var3.next();
+      tableList.add(view.asTable().select(columnNames));
+    }
+
+    return tableList;
+  }
+
   protected void setSourceTable(Table sourceTable) {
     this.sourceTable = sourceTable;
   }

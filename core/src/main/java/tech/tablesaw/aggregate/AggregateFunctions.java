@@ -7,6 +7,8 @@ import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.moment.Kurtosis;
 import org.apache.commons.math3.stat.descriptive.moment.Skewness;
+import org.apache.commons.math3.stat.descriptive.rank.Percentile;
+import org.apache.commons.math3.stat.descriptive.rank.Percentile.EstimationType;
 import tech.tablesaw.api.BooleanColumn;
 import tech.tablesaw.api.DateColumn;
 import tech.tablesaw.api.DateTimeColumn;
@@ -282,6 +284,24 @@ public class AggregateFunctions {
         }
       };
 
+    public static final NumericAggregateFunction quartile1_R7 =
+            new NumericAggregateFunction("First Quartile") {
+
+                @Override
+                public Double summarize(NumericColumn<?> column) {
+                    return percentileR7(column, 25.0);
+                }
+            };
+
+    public static final NumericAggregateFunction quartile3_R7 =
+            new NumericAggregateFunction("Third Quartile") {
+
+                @Override
+                public Double summarize(NumericColumn<?> column) {
+                    return percentileR7(column, 75.0);
+                }
+            };
+
   public static final NumericAggregateFunction percentile90 =
       new NumericAggregateFunction("90th Percentile") {
 
@@ -442,7 +462,10 @@ public class AggregateFunctions {
   public static Double percentile(NumericColumn<?> data, Double percentile) {
     return StatUtils.percentile(removeMissing(data), percentile);
   }
-
+    public static Double percentileR7(NumericColumn<?> data, Double percentile) {
+        Percentile p = new Percentile();
+        return p.withEstimationType(EstimationType.R_7).evaluate(removeMissing(data), percentile);
+    }
   private static double[] removeMissing(NumericColumn<?> column) {
     NumericColumn<?> numericColumn = (NumericColumn<?>) column.removeMissing();
     return numericColumn.asDoubleArray();

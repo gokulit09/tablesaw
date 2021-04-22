@@ -40,10 +40,8 @@ import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import tech.tablesaw.aggregate.AggregateFunction;
-import tech.tablesaw.aggregate.CrossTab;
-import tech.tablesaw.aggregate.PivotTable;
-import tech.tablesaw.aggregate.Summarizer;
+
+import tech.tablesaw.aggregate.*;
 import tech.tablesaw.columns.Column;
 import tech.tablesaw.io.DataFrameReader;
 import tech.tablesaw.io.DataFrameWriter;
@@ -243,6 +241,7 @@ public class Table extends Relation implements Iterable<Row> {
     }
     return this;
   }
+
 
   /**
    * For internal Tablesaw use only
@@ -970,6 +969,14 @@ public class Table extends Relation implements Iterable<Row> {
       this.addColumns(column);
     }
     return this;
+  }
+
+  public Computation compute(String columnName, AggregateFunction function) {
+    return new Computation(this, columnName, function);
+  }
+
+  public CaseFunction when(Selection rows, Object whenMatch, String columnName) {
+    return new CaseFunction(this, rows, whenMatch, columnName);
   }
 
   public Summarizer summarize(String columName, AggregateFunction<?, ?>... functions) {
