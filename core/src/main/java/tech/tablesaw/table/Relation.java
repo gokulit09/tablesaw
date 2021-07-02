@@ -21,24 +21,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import tech.tablesaw.api.BooleanColumn;
-import tech.tablesaw.api.CategoricalColumn;
-import tech.tablesaw.api.ColumnType;
-import tech.tablesaw.api.DateColumn;
-import tech.tablesaw.api.DateTimeColumn;
-import tech.tablesaw.api.DoubleColumn;
-import tech.tablesaw.api.FloatColumn;
-import tech.tablesaw.api.InstantColumn;
-import tech.tablesaw.api.IntColumn;
-import tech.tablesaw.api.LongColumn;
-import tech.tablesaw.api.NumericColumn;
-import tech.tablesaw.api.Row;
-import tech.tablesaw.api.ShortColumn;
-import tech.tablesaw.api.StringColumn;
-import tech.tablesaw.api.Table;
-import tech.tablesaw.api.TextColumn;
-import tech.tablesaw.api.TimeColumn;
+
+import tech.tablesaw.api.*;
 import tech.tablesaw.columns.Column;
+import tech.tablesaw.columns.map.MapColumnType;
 import tech.tablesaw.conversion.TableConverter;
 import tech.tablesaw.conversion.smile.SmileConverter;
 import tech.tablesaw.io.string.DataFramePrinter;
@@ -179,6 +165,15 @@ public abstract class Relation implements Iterable<Row> {
     return columnTypes;
   }
 
+  public boolean isMapColumn(String columnName) {
+    String[] path = this.path(columnName);
+    return this.column(path[0]).type().equals(MapColumnType.instance());
+  }
+
+  public boolean isMapColumn(int columnIndex) {
+    return this.column(columnIndex).type().equals(MapColumnType.instance());
+  }
+
   /** Returns an array of column widths for printing tables */
   public int[] colWidths() {
     int cols = columnCount();
@@ -313,6 +308,19 @@ public abstract class Relation implements Iterable<Row> {
     return columns().stream()
         .filter(e -> e instanceof NumericColumn<?>)
         .toArray(NumericColumn[]::new);
+  }
+
+  public String[] path(String pathName) {
+    return pathName.split("/");
+  }
+
+  public ListTableColumn listTableColumn(String columnName) {
+    if (this.isMapColumn(columnName)) {
+      String[] path = this.path(columnName);
+      return (ListTableColumn)((MapColumn)this.column(path[0])).getColumn((String[])Arrays.copyOfRange(path, 1, path.length));
+    } else {
+      return (ListTableColumn)this.column(columnName);
+    }
   }
 
   /** Returns all the NumericColumns in the relation */

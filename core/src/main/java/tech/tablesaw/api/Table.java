@@ -43,6 +43,7 @@ import java.util.stream.Stream;
 
 import tech.tablesaw.aggregate.*;
 import tech.tablesaw.columns.Column;
+import tech.tablesaw.columns.listtable.ListTableType;
 import tech.tablesaw.io.DataFrameReader;
 import tech.tablesaw.io.DataFrameWriter;
 import tech.tablesaw.io.DataReader;
@@ -1385,6 +1386,87 @@ public class Table extends Relation implements Iterable<Row> {
     }
 
     return result;
+  }
+
+  public Table explodMapEmptyCopy() {
+    Table copy = new Table(this.name);
+    Iterator var2 = this.columnList.iterator();
+
+    while(var2.hasNext()) {
+      Column<?> column = (Column)var2.next();
+      MapColumn mapColumn = MapColumn.create(column.name());
+      if (column.type() == ListTableType.instance()) {
+        Table t = (Table)column.get(0);
+        t.columnList.forEach((c) -> {
+          mapColumn.put(c.emptyCopy());
+        });
+        copy.addColumns(mapColumn);
+      } else {
+        copy.addColumns(column.emptyCopy());
+      }
+    }
+
+    return copy;
+  }
+
+  public Table explodEmptyCopy() {
+    Table copy = new Table(this.name);
+    Iterator var2 = this.columnList.iterator();
+
+    while(var2.hasNext()) {
+      Column<?> column = (Column)var2.next();
+      if (column.type() == ListTableType.instance()) {
+        Table t = (Table)column.get(0);
+        t.columnList.forEach((c) -> {
+          copy.addColumns(c.emptyCopy());
+        });
+      } else {
+        copy.addColumns(column.emptyCopy());
+      }
+    }
+
+    return copy;
+  }
+
+  public Table explodEmptyCopy(Column column) {
+    Table copy = new Table(this.name);
+    if (column.type() == ListTableType.instance()) {
+      Table t = (Table)column.get(0);
+      t.columnList.forEach((c) -> {
+        copy.addColumns(c.emptyCopy());
+      });
+    } else {
+      copy.addColumns(column.emptyCopy());
+    }
+
+    return copy;
+  }
+
+
+
+  public Table explodeListTable(String columnName) {
+    return this.explodeListTable((Column)this.listTableColumn(columnName));
+  }
+
+  public Table explodeListTable(Column column) {
+    Table raw = this;
+    Table result = this.emptyCopy();
+    Table explode = this.explodEmptyCopy(column);
+
+    for(int i = 0; i < raw.rowCount(); ++i) {
+      Row row = raw.row(i);
+      Table t = (Table)column.get(i);
+
+      for(int j = 0; j < t.rowCount(); ++j) {
+        result.addRow(row);
+        explode.addRow(t.row(j));
+      }
+    }
+
+    explode.columnList.forEach((c) -> {
+      result.addColumns(c);
+    });
+    return result.removeColumns(column);
   }
 
   /** Writes one row of id variables into the result table */
